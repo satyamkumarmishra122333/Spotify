@@ -1,0 +1,185 @@
+console.log("Lets write javascript")
+let currentSong = new Audio()
+let songs;
+let currFolder;
+// let folder;
+async function getSongs(folder) {
+    currFolder = folder;
+    let a = await fetch(`http://127.0.0.1:5500/84_Spotify_Clone/${folder}/`)
+    let response = await a.text();
+    // console.log(response);
+    let div = document.createElement("div");
+    div.innerHTML = response;
+    let as = div.getElementsByTagName("a")
+    songs = []
+    for (let index = 0; index < as.length; index++) {
+        const element = as[index];
+        if (element.href.endsWith(".mp3")) {
+            songs.push(element.href.split(`/${folder}/`)[1])
+        }
+    }
+
+    let songUL = document.querySelector(".song-list").getElementsByTagName("ul")[0]
+    songUL.innerHTML = ""
+    for (const song of songs) {
+        songUL.innerHTML = songUL.innerHTML + `<li>
+                            <img src="music.svg" style="filter: invert(1);" alt="">
+                            <div class="infolib">
+                               <div>${song.replaceAll("%20", " ")}</div>
+                               <div>Satyam</div>
+                            </div>
+                            <div class="play-lib-card"><img src="play.svg" alt=""></div>
+        </li>`;
+
+    }
+
+    //  attach an event listener to each song 
+    Array.from(document.querySelector(".song-list").getElementsByTagName("li")).forEach(e => {
+        e.addEventListener('click', element => {
+            // console.log(e.querySelector(".infolib").firstElementChild.innerHTML)
+            // e.prepend("Spotify_84_Clone/")
+
+            playMusic(e.querySelector(".infolib").firstElementChild.innerHTML)
+
+
+        })
+    })
+    return (folder)
+
+}
+
+function secondToMinutesSecods(seconds) {
+    if (isNaN(seconds) || seconds < 0) {
+        return "Invalid time"
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+
+    const formattedMinutes = String(minutes).padStart(2, '0');
+    const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+
+    return `${formattedMinutes} : ${formattedSeconds}`
+}
+
+
+const playMusic = (track, pause = false) => {
+    // let audio = new Audio("/84_Spotify_Clone/songs/" + track);
+    currentSong.src = `/84_Spotify_Clone/${currFolder}/` + track
+    if (!pause) {
+
+        currentSong.play()
+        play.src = "pause.svg";
+    }
+    // -----?
+    document.querySelector(".songinfo").innerHTML = decodeURI(track)
+    document.querySelector(".songtime").innerHTML = "00:00 / 00:00"
+
+
+
+}
+
+
+async function main() {
+
+
+    await getSongs("songs/lofi");
+    playMusic(songs[0], true)
+    // console.log(songs)
+
+
+    // Attach an event listener to prev and next buttton in playbar 
+    play.addEventListener('click', () => {
+        if (currentSong.paused) {
+            currentSong.play()
+            play.src = "pause.svg"
+        }
+        else {
+            currentSong.pause()
+            play.src = "play.svg"
+        }
+    })
+
+    //update time
+    currentSong.addEventListener('timeupdate', () => {
+        // console.log(currentSong.currentTime , currentSong.duration);
+        document.querySelector(".songtime").innerHTML = `${secondToMinutesSecods(currentSong.currentTime)}/${secondToMinutesSecods(currentSong.duration)}`
+        document.querySelector(" .circle").style.left = (currentSong.currentTime / currentSong.duration) * 100 + "%";
+    })
+
+    //adding eventlistener to seek bar
+    document.querySelector(".seekbar").addEventListener('click', e => {
+        let percent = (e.offsetX / e.target.getBoundingClientRect().width) * 100;
+        document.querySelector(".circle").style.left = percent + "%";
+        currentSong.currentTime = currentSong.duration * percent / 100
+    })
+
+
+    //Addingg an event listener for hamburger
+    document.querySelector(" .hamburger").addEventListener('click', () => {
+        document.querySelector(".left").style.left = "0";
+    })
+
+    //Addingg an event listener for close
+    document.querySelector(".close").addEventListener('click', () => {
+        document.querySelector(".left").style.left = "-100%"
+    })
+
+    //Prev next buttion event listener
+
+
+    previous.addEventListener('click', () => {
+        let index = songs.indexOf(currentSong.src.split("/").slice(-1)[0])
+        if ((index - 1) >= 0) {
+
+            playMusic(songs[index - 1])
+        }
+    })
+
+    next.addEventListener('click', () => {
+        console.log("Next clicked")
+        let index = songs.indexOf(currentSong.src.split("/").slice(-1)[0])
+        if ((index + 1) < songs.length - 1) {
+
+            playMusic(songs[index + 1])
+        }
+        else {
+            alert("Sorry ! No new songs")
+        }
+
+    })
+
+    //Add an event to volume
+
+    document.querySelector(".range").getElementsByTagName('input')[0].addEventListener('change', (e) => {
+        // console.log(e , e.target , e.target.value);
+        currentSong.volume = parseInt(e.target.value) / 100;
+    })
+
+}
+// -------------------------
+
+// loading playlist using cards 
+Array.from(document.getElementsByClassName('card')).forEach(e => {
+    e.addEventListener("click", async item => {
+        songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`);
+
+        // ------------------------------
+
+        
+    })
+
+
+})
+
+
+
+// loading playlist using cards 
+
+
+    // loading playlist using cards
+
+
+
+
+main() 
